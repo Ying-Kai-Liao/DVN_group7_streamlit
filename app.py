@@ -250,12 +250,6 @@ st.markdown(
 # ====================================================================
 # Title + KPI metric cards
 # ====================================================================
-st.markdown(
-    f'<h1 class="dash-title" style="color:{COLORS["primary"]};">CPI Australia · Cost-of-living dashboard</h1>'
-    f'<div class="dash-sub">Pressure differs by city, category, and household.</div>',
-    unsafe_allow_html=True,
-)
-
 latest_aus = filtered_cpi[filtered_cpi["city"] == "Australia"].dropna(subset=["yoy_change"])
 latest_cpi_val = latest_aus["yoy_change"].iloc[-1] if len(latest_aus) > 0 else None
 
@@ -309,6 +303,28 @@ if len(filtered_exp) > 0 and filtered_exp["date"].nunique() > 1:
 real_gap = None
 if latest_cpi_val is not None and latest_wpi_val is not None:
     real_gap = latest_cpi_val - latest_wpi_val
+
+# Data-driven thesis line — replaces the static dash-sub so the headline
+# reflects the current window/filter selection.
+thesis_parts = []
+if real_gap is not None:
+    direction = "fallen" if real_gap > 0 else "risen"
+    thesis_parts.append(
+        f"Real wages have {direction} <b>{abs(real_gap):.1f} pp</b>"
+    )
+if top_city_group != "N/A" and top_city != "N/A" and top_city_pct is not None:
+    thesis_parts.append(
+        f"pain concentrates in <b>{top_city_group}</b>, "
+        f"hitting <b>{top_city}</b> hardest (+{top_city_pct:.1f}%)"
+    )
+thesis = " · ".join(thesis_parts) if thesis_parts \
+    else "Pressure differs by city, category, and household."
+
+st.markdown(
+    f'<h1 class="dash-title" style="color:{COLORS["primary"]};">CPI Australia · Cost-of-living dashboard</h1>'
+    f'<div class="dash-sub">{thesis}</div>',
+    unsafe_allow_html=True,
+)
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Headline CPI (YoY)", f"{latest_cpi_val:.1f}%" if latest_cpi_val else "N/A")
