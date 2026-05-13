@@ -275,31 +275,29 @@ if len(filtered_exp) > 0 and filtered_exp["date"].nunique() > 1:
     first_date_g = filtered_exp["date"].min()
     last_date_g = filtered_exp["date"].max()
 
-    first_vals_g = filtered_exp[filtered_exp["date"] == first_date_g].groupby("group")["cpi_index"].mean()
-    last_vals_g = filtered_exp[filtered_exp["date"] == last_date_g].groupby("group")["cpi_index"].mean()
-    exp_change = ((last_vals_g - first_vals_g) / first_vals_g * 100).dropna().drop("All groups CPI", errors="ignore")
+    # Per-(city, group) % change — same matrix the heatmap displays,
+    # so CTA aggregates align with what the user sees in the cells.
+    pivot_first_g = filtered_exp[filtered_exp["date"] == first_date_g] \
+        .pivot_table(index="city", columns="group", values="cpi_index")
+    pivot_last_g = filtered_exp[filtered_exp["date"] == last_date_g] \
+        .pivot_table(index="city", columns="group", values="cpi_index")
+    pct_matrix = ((pivot_last_g - pivot_first_g) / pivot_first_g * 100) \
+        .drop(columns=["All groups CPI"], errors="ignore")
 
+    exp_change = pct_matrix.mean(axis=0).dropna()
     if len(exp_change) > 0:
         top_group = exp_change.idxmax()
         top_group_pct = exp_change.max()
 
-    # Which city is hurting most overall?
-    first_city = filtered_exp[(filtered_exp["date"] == first_date_g) & (filtered_exp["group"] == "All groups CPI")] \
-        .groupby("city")["cpi_index"].mean()
-    last_city = filtered_exp[(filtered_exp["date"] == last_date_g) & (filtered_exp["group"] == "All groups CPI")] \
-        .groupby("city")["cpi_index"].mean()
-    city_pressure = ((last_city - first_city) / first_city * 100).dropna()
+    # Which city is hurting most overall? Mean across categories — matches heatmap row means.
+    city_pressure = pct_matrix.mean(axis=1).dropna()
     if len(city_pressure) > 0:
         top_city = city_pressure.idxmax()
         top_city_pct = city_pressure.max()
 
-    # Within the top group, which city has the biggest jump?
-    if top_group != "N/A":
-        first_gc = filtered_exp[(filtered_exp["date"] == first_date_g) & (filtered_exp["group"] == top_group)] \
-            .set_index("city")["cpi_index"]
-        last_gc = filtered_exp[(filtered_exp["date"] == last_date_g) & (filtered_exp["group"] == top_group)] \
-            .set_index("city")["cpi_index"]
-        gc_change = ((last_gc - first_gc) / first_gc * 100).dropna()
+    # Within the top group, which city has the biggest jump? Single heatmap column.
+    if top_group != "N/A" and top_group in pct_matrix.columns:
+        gc_change = pct_matrix[top_group].dropna()
         if len(gc_change) > 0:
             top_group_city = gc_change.idxmax()
             top_group_city_pct = gc_change.max()
