@@ -499,18 +499,22 @@ if top_group != "N/A" and top_group_pct is not None and len(exp_change) > 0:
         bullets.append(f"Target hardest-hit city: <b>{top_city}</b>{cat_bit} (+{top_city_pct:.1f}%)")
 
     items_html = "".join(
-        f'<div style="flex:1;min-width:180px;padding:6px 10px;background:#fff;'
-        f'border-left:3px solid {COLORS["primary"]};border-radius:4px;font-size:0.82rem;">{b}</div>'
-        for b in bullets
+        f'<div style="flex:1;min-width:200px;padding:10px 14px;background:#fff;'
+        f'border-left:4px solid {COLORS["primary"]};border-radius:4px;'
+        f'font-size:1.0rem;line-height:1.35;display:flex;gap:10px;align-items:flex-start;">'
+        f'<span style="font-size:1.25rem;font-weight:800;color:{COLORS["primary"]};'
+        f'line-height:1;flex-shrink:0;">{i}</span>'
+        f'<span>{b}</span></div>'
+        for i, b in enumerate(bullets, start=1)
     )
     st.markdown(
         f"""
-        <div style="background:#F7F9FC;padding:10px 12px;border-radius:8px;margin-top:8px;">
-            <div style="font-size:0.72rem;font-weight:700;color:{COLORS['primary']};
-                        letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">
+        <div style="background:#F7F9FC;padding:14px 16px;border-radius:8px;margin-top:10px;">
+            <div style="font-size:0.85rem;font-weight:700;color:{COLORS['primary']};
+                        letter-spacing:0.6px;text-transform:uppercase;margin-bottom:10px;">
                 Next steps
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">{items_html}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">{items_html}</div>
         </div>
         """,
         unsafe_allow_html=True,
