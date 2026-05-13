@@ -268,6 +268,7 @@ top_group = "N/A"
 top_group_pct = None
 top_city = "N/A"
 top_city_pct = None
+top_city_group = "N/A"
 top_group_city = "N/A"
 top_group_city_pct = None
 
@@ -289,11 +290,13 @@ if len(filtered_exp) > 0 and filtered_exp["date"].nunique() > 1:
         top_group = exp_change.idxmax()
         top_group_pct = exp_change.max()
 
-    # Which city is hurting most overall? Mean across categories — matches heatmap row means.
-    city_pressure = pct_matrix.mean(axis=1).dropna()
+    # Hardest-hit city = the single brightest cell in the heatmap (city × category),
+    # so the % shown in the CTA equals a value the user can read off the heatmap.
+    city_pressure = pct_matrix.max(axis=1).dropna()
     if len(city_pressure) > 0:
         top_city = city_pressure.idxmax()
         top_city_pct = city_pressure.max()
+        top_city_group = pct_matrix.loc[top_city].idxmax()
 
     # Within the top group, which city has the biggest jump? Single heatmap column.
     if top_group != "N/A" and top_group in pct_matrix.columns:
@@ -476,7 +479,8 @@ if top_group != "N/A" and top_group_pct is not None and len(exp_change) > 0:
     if real_gap is not None and real_gap > 0:
         bullets.append(f"Close real-wage gap ({real_gap:+.1f} pp)")
     if top_city != "N/A":
-        bullets.append(f"Target hardest-hit city: <b>{top_city}</b> (+{top_city_pct:.1f}%)")
+        cat_bit = f" on <b>{top_city_group}</b>" if top_city_group != "N/A" else ""
+        bullets.append(f"Target hardest-hit city: <b>{top_city}</b>{cat_bit} (+{top_city_pct:.1f}%)")
 
     items_html = "".join(
         f'<div style="flex:1;min-width:180px;padding:6px 10px;background:#fff;'
